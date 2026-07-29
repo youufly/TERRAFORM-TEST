@@ -1,0 +1,3 @@
+cidr_admin = "VOTRE_IP_PUBLIQUE/32"
+vpc_id     = "vpc-xxxxxxxxxxxxxxxxx"
+subnet_id  = "subnet-xxxxxxxxxxxxxxxxx"

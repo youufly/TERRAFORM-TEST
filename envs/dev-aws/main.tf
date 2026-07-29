@@ -1,45 +1,3 @@
-terraform {
-  required_version = ">= 1.10"
-  required_providers {
-    aws = { source = "hashicorp/aws", version = "~> 6.0" }
-  }
-}
-
-provider "aws" {
-  region = "us-east-1"
-  default_tags {
-    tags = local.etiquettes
-  }
-}
-
-locals {
-  prefixe = "tpiac-dev"
-  etiquettes = {
-    Projet      = "tp-iac"
-    Environment = "dev"
-    ManagedBy   = "terraform"
-    Owner       = "ymaincent"
-  }
-}
-
-variable "cidr_admin" {
-  description = "CIDR autorisé pour le SSH (votre IP publique)."
-  type        = string
-  default     = "88.185.39.8/32"
-}
-
-variable "vpc_id" {
-  description = "VPC existant à utiliser."
-  type        = string
-  default     = "vpc-0df3c05a870a5f9ec"
-}
-
-variable "subnet_id" {
-  description = "Sous-réseau existant à utiliser."
-  type        = string
-  default     = "subnet-0e511e2830ea7a748"
-}
-
 # ------------------------------------------------------ Groupe de sécurité ---
 resource "aws_security_group" "web" {
   name        = "${local.prefixe}-web"
@@ -92,7 +50,7 @@ resource "aws_instance" "web" {
 
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                 = "required" # IMDSv2 imposé
+    http_tokens                 = "required" # IMDSv2 impose
     http_put_response_hop_limit = 1
   }
 
@@ -112,8 +70,4 @@ resource "aws_instance" "web" {
   EOT
 
   tags = { Name = "${local.prefixe}-web" }
-}
-
-output "url_publique" {
-  value = "http://${aws_instance.web.public_ip}"
 }
