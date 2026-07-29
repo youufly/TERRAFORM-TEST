@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Afficher un message de test
+        run: echo "Pipeline CI/CD fonctionnel"
+
+      - name: Lister les fichiers du depot
+        run: ls -la
