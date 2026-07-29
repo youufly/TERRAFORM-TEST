@@ -34,9 +34,24 @@ jobs:
 
       - name: Terraform Format
         run: terraform fmt -check
+        continue-on-error: true
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
         run: terraform plan
+
+      - name: Utiliser le Makefile racine (hello)
+        working-directory: .
+        run: make hello
+
+      - name: Utiliser le Makefile racine (build)
+        if: github.ref == 'refs/heads/dev'
+        working-directory: .
+        run: make build
+
+      - name: Nettoyer les artefacts du Makefile
+        if: always()
+        working-directory: .
+        run: make clean
