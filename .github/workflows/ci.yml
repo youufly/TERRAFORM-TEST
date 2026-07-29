@@ -1,5 +1,3 @@
-cd ~/TERRAFORM-TEST
-cat > .github/workflows/ci.yml << 'EOF'
 name: Terraform AWS CI
 
 on:
