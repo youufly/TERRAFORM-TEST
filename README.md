@@ -98,4 +98,3 @@ Résolution en cours : rebase du commit local par-dessus `origin/main` pour obte
 git rebase origin/main
 git push
 ```
-
