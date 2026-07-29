@@ -99,9 +99,3 @@ git rebase origin/main
 git push
 ```
 
-## Leçons retenues
-
-- Toujours anonymiser **manuellement et intégralement** un fichier `.example` avant de le commit — un `cp` brut ne suffit jamais.
-- Commenter une ligne (`#`) ne la rend pas invisible pour les outils de scan de secrets : il faut la supprimer.
-- La Push Protection GitHub est une sécurité utile : mieux vaut un push bloqué qu'un secret qui fuite publiquement.
-- En cas de credentials exposées, même bloquées avant publication, il est prudent de les considérer comme compromises et de les révoquer côté fournisseur (AWS IAM/STS).
