@@ -58,4 +58,3 @@ test: tf-fmt tf-validate ## Chaine de verification complete (fmt + validate)
 
 destroy: ## Detruit l'infrastructure AWS
 	cd $(TF_DIR) && terraform destroy
-EOF
