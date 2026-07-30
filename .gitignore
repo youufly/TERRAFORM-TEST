@@ -33,3 +33,10 @@ override.tf.json
 terraform.rc
 
 !.terraform.lock.hcl
+
+# ---- Cles privees generees ---------------------------------------------------
+*.pem
+*.key
+
+# ---- Ansible : inventaire genere ---------------------------------------------
+ansible/inventory.ini

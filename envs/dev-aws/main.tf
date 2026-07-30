@@ -31,6 +31,23 @@ resource "aws_security_group" "web" {
   tags = { Name = "${local.prefixe}-sg-web" }
 }
 
+# ---------------------------------------------------------------- Cle SSH ----
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "generee" {
+  key_name   = "${local.prefixe}-key"
+  public_key = tls_private_key.ssh.public_key_openssh
+}
+
+resource "local_sensitive_file" "cle_privee" {
+  content         = tls_private_key.ssh.private_key_pem
+  filename        = "${path.module}/${local.prefixe}-key.pem"
+  file_permission = "0600"
+}
+
 # -------------------------------------------------------------- Instance -----
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -47,6 +64,7 @@ resource "aws_instance" "web" {
   instance_type          = "t2.micro"
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [aws_security_group.web.id]
+  key_name               = aws_key_pair.generee.key_name
 
   metadata_options {
     http_endpoint               = "enabled"
@@ -59,15 +77,6 @@ resource "aws_instance" "web" {
     volume_type = "gp3"
     volume_size = 10
   }
-
-  user_data = <<-EOT
-    #!/bin/bash
-    set -euo pipefail
-    apt-get update
-    apt-get install -y nginx
-    echo "<h1>${local.prefixe} - deploye par Terraform</h1>" > /var/www/html/index.html
-    systemctl enable --now nginx
-  EOT
 
   tags = { Name = "${local.prefixe}-web" }
 }

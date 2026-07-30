@@ -1,0 +1,21 @@
+---
+- name: Configurer le serveur web
+  hosts: web
+  become: true
+  tasks:
+    - name: Installer nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Deployer la page d'accueil
+      copy:
+        content: "<h1>tpiac-dev - deploye par Terraform + Ansible</h1>\n"
+        dest: /var/www/html/index.html
+
+    - name: Demarrer et activer nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: true

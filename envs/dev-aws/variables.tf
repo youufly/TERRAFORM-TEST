@@ -1,7 +1,7 @@
 variable "cidr_admin" {
   description = "CIDR autorisé pour le SSH (votre IP publique)."
   type        = string
-  default     = "88.185.39.8/32"
+  default     = "54.145.133.195/32"
 }
 
 variable "vpc_id" {
