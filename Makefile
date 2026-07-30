@@ -1,9 +1,15 @@
+cat > Makefile << 'EOF'
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
 MAKEFLAGS += --warn-undefined-variables --no-print-directory
 
-.PHONY: help hello build clean
+TF_DIR := envs/dev-aws
+ANSIBLE_DIR := ansible
+
+.PHONY: help hello build clean \
+        tf-init tf-fmt tf-validate tf-plan tf-apply \
+        provision deploy destroy test
 
 help: ## Affiche cette aide
 	@echo ""
@@ -13,35 +19,43 @@ help: ## Affiche cette aide
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 
-hello: ## Affiche un message avec l'utilisateur système
+hello: ## Affiche un message avec l'utilisateur systeme
 	@echo "Bonjour, ceci est mon premier Makefile"
-	@echo "Utilisateur système : $$USER"
+	@echo "Utilisateur systeme : $$USER"
 
-build: ## Crée un dossier out/ avec un fichier version.txt daté
+build: ## Cree un dossier out/ avec un fichier version.txt date
 	mkdir -p out
 	date > out/version.txt
-	@echo "✓ out/version.txt créé"
+	@echo "✓ out/version.txt cree"
 
 clean: ## Supprime le dossier out/ sans erreur s'il n'existe pas
 	rm -rf out
-	@echo "✓ nettoyé"
+	@echo "✓ nettoye"
 
-.PHONY: tf-init tf-plan tf-apply provision deploy destroy
+tf-init: ## Initialise Terraform
+	cd $(TF_DIR) && terraform init
 
-tf-init: ## Initialise Terraform pour dev-aws
-	cd envs/dev-aws && terraform init
+tf-fmt: ## Formate le code Terraform
+	cd $(TF_DIR) && terraform fmt -recursive
 
-tf-plan: ## Calcule le plan Terraform pour dev-aws
-	cd envs/dev-aws && terraform plan -out=dev.tfplan
+tf-validate: tf-init ## Valide la syntaxe Terraform
+	cd $(TF_DIR) && terraform validate
 
-tf-apply: ## Applique le plan Terraform pour dev-aws
-	cd envs/dev-aws && terraform apply "dev.tfplan"
+tf-plan: tf-validate ## Calcule le plan Terraform
+	cd $(TF_DIR) && terraform plan -out=dev.tfplan
+
+tf-apply: ## Applique le plan Terraform precedemment calcule
+	cd $(TF_DIR) && terraform apply "dev.tfplan"
 
 provision: ## Provisionne l'instance avec Ansible (nginx)
-	cd ansible && ./inventory.sh > inventory.ini
-	cd ansible && ansible-playbook -i inventory.ini playbook.yml
+	cd $(ANSIBLE_DIR) && ./inventory.sh > inventory.ini
+	cd $(ANSIBLE_DIR) && ansible-playbook -i inventory.ini playbook.yml
 
 deploy: tf-init tf-plan tf-apply provision ## Deploie l'infra AWS puis la configure avec Ansible
 
+test: tf-fmt tf-validate ## Chaine de verification complete (fmt + validate)
+	@echo "✓ Verifications Terraform passees."
+
 destroy: ## Detruit l'infrastructure AWS
-	cd envs/dev-aws && terraform destroy
+	cd $(TF_DIR) && terraform destroy
+EOF
