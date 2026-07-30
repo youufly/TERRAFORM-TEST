@@ -2,23 +2,73 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>TP2 - Infrastructure as Code</title>
+  <title>~*~ TP2 Infrastructure as Code ~*~</title>
   <style>
-    body { font-family: sans-serif; background: #0d1117; color: #e6edf3; text-align: center; padding: 60px; }
-    h1 { color: #58a6ff; }
-    .badge { display: inline-block; margin: 8px; padding: 8px 16px; background: #21262d; border-radius: 6px; border: 1px solid #30363d; }
-    .footer { margin-top: 40px; color: #8b949e; }
+    body {
+      background-color: #000033;
+      background-image: url('https://i.gifer.com/origin/6a/6a7b3c2b4a1d4c4e4b0e5c8f7f7f7f7f.gif');
+      color: #00FF00;
+      font-family: "Comic Sans MS", cursive;
+      text-align: center;
+    }
+    marquee {
+      background: #FF00FF;
+      color: yellow;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 6px;
+      border: 4px dashed yellow;
+    }
+    h1 {
+      color: #FFFF00;
+      text-shadow: 3px 3px #FF0000;
+      font-size: 40px;
+    }
+    table {
+      margin: 20px auto;
+      border: 5px ridge #00FFFF;
+      background: #000066;
+      padding: 15px;
+      width: 80%;
+    }
+    td { padding: 8px; text-align: left; color: #00FF00; font-size: 15px; }
+    .blink { animation: blinker 1s linear infinite; color: red; font-weight: bold; }
+    @keyframes blinker { 50% { opacity: 0; } }
+    a { color: #FF00FF; }
+    hr { border: 2px dashed #FFFF00; }
+    .counter { background: black; color: lime; font-family: monospace; padding: 4px 8px; border: 2px inset gray; }
   </style>
 </head>
 <body>
-  <h1>TP2 - Infrastructure as Code</h1>
-  <p>Projet realise par ymaincent</p>
-  <div>
-    <span class="badge">Terraform</span>
-    <span class="badge">Ansible</span>
-    <span class="badge">GitHub Actions</span>
-    <span class="badge">AWS</span>
-  </div>
-  <p class="footer">Deploiement automatise via pipeline CI/CD</p>
+
+  <marquee behavior="alternate">*** BIENVENUE SUR MON SITE PERSO DE DEV OPS *** BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 ***</marquee>
+
+  <h1>~ TP2 : Infrastructure as Code ~</h1>
+  <p class="blink">** SITE EN CONSTRUCTION PERMANENTE **</p>
+
+  <img src="https://web.archive.org/web/2000/http://www.geocities.com/images/construction.gif" width="88" height="31" alt="under construction">
+
+  <hr>
+
+  <table>
+    <tr><td><b>&gt;&gt; TERRAFORM</b></td><td>Cree le VPC, le Security Group et l'instance EC2. Langage declaratif : on decrit l'etat voulu, l'outil calcule le reste tout seul !</td></tr>
+    <tr><td><b>&gt;&gt; ANSIBLE</b></td><td>Se connecte en SSH et installe nginx + configure le serveur. Convergence : peu importe l'etat de depart, le resultat final est garanti identique.</td></tr>
+    <tr><td><b>&gt;&gt; GITHUB ACTIONS</b></td><td>Pipeline CI/CD automatique : fmt, tflint, trivy (securite), puis deploiement si tout est vert. Zero intervention manuelle !</td></tr>
+  </table>
+
+  <hr>
+
+  <p><b>&lt;&lt; Enjeux du projet &gt;&gt;</b></p>
+  <p>Reproductibilite - Traçabilite - Securite (IMDSv2, chiffrement, SSH restreint) - Automatisation complete</p>
+
+  <hr>
+
+  <p>Deploye avec succes par <b>{{ ansible_user | default('ymaincent') }}</b></p>
+  <p class="counter">VOUS ETES LE VISITEUR N° 004271</p>
+
+  <p><img src="https://web.archive.org/web/2000/http://www.geocities.com/images/newmail.gif" width="30"> Signez mon livre d'or ! (bientot disponible)</p>
+
+  <marquee direction="right">Merci de votre visite ~ Revenez vite ~</marquee>
+
 </body>
 </html>
