@@ -7,7 +7,7 @@ TF_DIR := envs/dev-aws
 ANSIBLE_DIR := ansible
 
 .PHONY: help hello build clean \
-        tf-init tf-fmt tf-validate tf-plan tf-apply \
+        tf-init tf-fmt tf-tflint tf-trivy tf-validate tf-plan tf-apply \
         provision deploy destroy test
 
 help: ## Affiche cette aide
@@ -37,6 +37,12 @@ tf-init: ## Initialise Terraform
 tf-fmt: ## Formate le code Terraform
 	cd $(TF_DIR) && terraform fmt -recursive
 
+tf-tflint: ## Analyse la qualite du code Terraform avec tflint
+	cd $(TF_DIR) && tflint --init && tflint
+
+tf-trivy: ## Scan de securite du code Terraform avec trivy
+	cd $(TF_DIR) && trivy config --exit-code 1 --severity HIGH,CRITICAL .
+
 tf-validate: tf-init ## Valide la syntaxe Terraform
 	cd $(TF_DIR) && terraform validate
 
@@ -52,7 +58,7 @@ provision: ## Provisionne l'instance avec Ansible (nginx)
 
 deploy: tf-init tf-plan tf-apply provision ## Deploie l'infra AWS puis la configure avec Ansible
 
-test: tf-fmt tf-validate ## Chaine de verification complete (fmt + validate)
+test: tf-fmt tf-tflint tf-trivy tf-validate ## Chaine de verification complete (fmt + validate)
 	@echo "✓ Verifications Terraform passees."
 
 destroy: ## Detruit l'infrastructure AWS

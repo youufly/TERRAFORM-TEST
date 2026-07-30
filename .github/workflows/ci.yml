@@ -1,20 +1,108 @@
-name: CI
+name: Deploiement automatise Terraform + Ansible
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  check:
+  validation:
+    name: Validation IaC (fmt, tflint, trivy)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: envs/dev-aws
     steps:
-      - name: Checkout du code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Afficher un message de test
-        run: echo "Pipeline CI/CD fonctionnel"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.0
 
-      - name: Lister les fichiers du depot
-        run: ls -la
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.64.0
+
+      - name: TFLint
+        run: |
+          tflint --init
+          tflint
+
+      - name: Setup Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Trivy scan
+        run: trivy config --exit-code 1 --severity HIGH,CRITICAL .
+
+  deploy:
+    name: Deploiement AWS + provisioning Ansible
+    needs: validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.0
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Terraform init
+        working-directory: envs/dev-aws
+        run: terraform init
+
+      - name: Terraform apply
+        working-directory: envs/dev-aws
+        env:
+          TF_VAR_cidr_admin: "0.0.0.0/0"
+        run: terraform apply -auto-approve
+
+      - name: Recuperer l'IP publique et generer l'inventaire
+        working-directory: envs/dev-aws
+        run: |
+          IP=$(terraform output -raw url_publique | sed -e 's|http://||')
+          echo "IP_INSTANCE=$IP" >> "$GITHUB_ENV"
+          cat > ../../ansible/inventory.ini << INV
+          [web]
+          $IP ansible_user=ubuntu ansible_ssh_private_key_file=tpiac-dev-key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+          INV
+
+      - name: Copier la cle privee generee pour Ansible
+        run: cp envs/dev-aws/tpiac-dev-key.pem ansible/tpiac-dev-key.pem
+
+      - name: Installer Ansible
+        run: sudo apt-get update && sudo apt-get install -y ansible
+
+      - name: Attendre que SSH soit disponible
+        run: sleep 30
+
+      - name: Lancer le playbook Ansible
+        working-directory: ansible
+        run: ansible-playbook -i inventory.ini playbook.yml
+
+      - name: Afficher l'URL du site deploye
+        run: echo "Site accessible sur http://${{ env.IP_INSTANCE }}"

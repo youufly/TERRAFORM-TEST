@@ -1,0 +1,4 @@
+# AVD-AWS-0107 : port 80 volontairement ouvert au public - c'est un serveur web
+AVD-AWS-0107
+# AVD-AWS-0104 : egress large volontaire - necessaire pour les mises a jour systeme (apt update)
+AVD-AWS-0104
