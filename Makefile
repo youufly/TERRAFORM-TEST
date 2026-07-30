@@ -1,4 +1,3 @@
-cat > Makefile << 'EOF'
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
