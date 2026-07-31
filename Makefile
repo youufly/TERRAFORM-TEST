@@ -71,7 +71,7 @@ destroy: ## Detruit l'infrastructure AWS
 inventory: ## Genere l'inventaire Ansible depuis terraform output
 	@IP=$$(cd $(TF_DIR) && terraform output -raw url_publique | sed -e 's|http://||'); \
 	printf '[web]\n%s ansible_user=ubuntu ansible_ssh_private_key_file=%s/$(SSH_KEY) ansible_ssh_common_args=%s\n' \
-		"$$IP" "$(TF_DIR)" "'-o StrictHostKeyChecking=no'" > $(INV_FILE); \
+		"$$IP" "$(CURDIR)/$(TF_DIR)" "'-o StrictHostKeyChecking=no'" > $(INV_FILE); \
 	echo "✓ Inventaire genere : $(INV_FILE) -> $$IP"
 
 # ---- Configuration Ansible (etape 4) -------------------------------------------
