@@ -6,7 +6,6 @@
   <style>
     body {
       background-color: #000033;
-      background-image: url('https://i.gifer.com/origin/6a/6a7b3c2b4a1d4c4e4b0e5c8f7f7f7f7f.gif');
       color: #00FF00;
       font-family: "Comic Sans MS", cursive;
       text-align: center;
@@ -37,38 +36,36 @@
     a { color: #FF00FF; }
     hr { border: 2px dashed #FFFF00; }
     .counter { background: black; color: lime; font-family: monospace; padding: 4px 8px; border: 2px inset gray; }
+    .gif-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
+    .gif-row > div { width: 150px; }
   </style>
 </head>
 <body>
-
   <marquee behavior="alternate">*** BIENVENUE SUR MON SITE PERSO DE DEV OPS *** BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 ***</marquee>
-
   <h1>~ TP2 : Infrastructure as Code ~</h1>
   <p class="blink">** SITE EN CONSTRUCTION PERMANENTE **</p>
+  <p style="font-size: 45px;">😱👹🤢😬💀🤮😵‍💫👀😈💢</p>
 
-  <img src="https://web.archive.org/web/2000/http://www.geocities.com/images/construction.gif" width="88" height="31" alt="under construction">
+  <div class="gif-row">
+    <div class="tenor-gif-embed" data-postid="16210167" data-share-method="host" data-aspect-ratio="1" data-width="100%"><a href="https://tenor.com/view/free-smiley-faces-de-emoji-smile-silly-happy-gif-16210167">Free Smiley GIF</a></div>
+    <div class="tenor-gif-embed" data-postid="16168306" data-share-method="host" data-aspect-ratio="1" data-width="100%"><a href="https://tenor.com/view/free-smiley-faces-de-emoji-poop-toilet-bowl-gif-16168306">Poop Smiley GIF</a></div>
+    <div class="tenor-gif-embed" data-postid="16168295" data-share-method="host" data-aspect-ratio="1" data-width="100%"><a href="https://tenor.com/view/free-smiley-faces-de-emoji-wink-scared-terrified-gif-16168295">Scared Smiley GIF</a></div>
+    <div class="tenor-gif-embed" data-postid="16210169" data-share-method="host" data-aspect-ratio="1" data-width="100%"><a href="https://tenor.com/view/free-smiley-faces-de-emoji-gif-16210169">Free Smiley GIF</a></div>
+  </div>
+  <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
 
   <hr>
-
   <table>
     <tr><td><b>&gt;&gt; TERRAFORM</b></td><td>Cree le VPC, le Security Group et l'instance EC2. Langage declaratif : on decrit l'etat voulu, l'outil calcule le reste tout seul !</td></tr>
     <tr><td><b>&gt;&gt; ANSIBLE</b></td><td>Se connecte en SSH et installe nginx + configure le serveur. Convergence : peu importe l'etat de depart, le resultat final est garanti identique.</td></tr>
     <tr><td><b>&gt;&gt; GITHUB ACTIONS</b></td><td>Pipeline CI/CD automatique : fmt, tflint, trivy (securite), puis deploiement si tout est vert. Zero intervention manuelle !</td></tr>
   </table>
-
   <hr>
-
   <p><b>&lt;&lt; Enjeux du projet &gt;&gt;</b></p>
   <p>Reproductibilite - Traçabilite - Securite (IMDSv2, chiffrement, SSH restreint) - Automatisation complete</p>
-
   <hr>
-
-  <p>Deploye avec succes par <b>{{ ansible_user | default('ymaincent') }}</b></p>
+  <p>Deploye avec succes par <b>ymaincent</b></p>
   <p class="counter">VOUS ETES LE VISITEUR N° 004271</p>
-
-  <p><img src="https://web.archive.org/web/2000/http://www.geocities.com/images/newmail.gif" width="30"> Signez mon livre d'or ! (bientot disponible)</p>
-
   <marquee direction="right">Merci de votre visite ~ Revenez vite ~</marquee>
-
 </body>
 </html>
