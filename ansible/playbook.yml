@@ -2,29 +2,12 @@
 - name: Configurer le serveur web
   hosts: web
   become: true
-  gather_facts: false
-
-  pre_tasks:
-    - name: Attendre la connexion SSH
-      ansible.builtin.wait_for_connection:
-        delay: 10
-        timeout: 300
-        sleep: 10
-
-    - name: Recuperer les facts
-      ansible.builtin.setup:
-
   tasks:
-    - name: Attendre la fin de cloud-init
-      ansible.builtin.command: cloud-init status --wait
-      changed_when: false
-
     - name: Installer nginx
       apt:
         name: nginx
         state: present
         update_cache: true
-
     - name: Deployer la page d'accueil depuis un template
       template:
         src: templates/index.html.j2
@@ -33,13 +16,11 @@
         group: www-data
         mode: "0644"
       notify: Recharger nginx
-
     - name: Demarrer et activer nginx
       systemd:
         name: nginx
         state: started
         enabled: true
-
   handlers:
     - name: Recharger nginx
       systemd:

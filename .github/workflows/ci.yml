@@ -83,6 +83,9 @@ jobs:
       - name: Installer Ansible
         run: sudo apt-get update && sudo apt-get install -y ansible
 
+      - name: Attendre que SSH soit disponible
+        run: sleep 30
+
       - name: Generer l'inventaire (make inventory)
         run: make inventory
 
