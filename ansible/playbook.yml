@@ -2,7 +2,23 @@
 - name: Configurer le serveur web
   hosts: web
   become: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Attendre la connexion SSH
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 300
+        sleep: 10
+
+    - name: Recuperer les facts
+      ansible.builtin.setup:
+
   tasks:
+    - name: Attendre la fin de cloud-init
+      ansible.builtin.command: cloud-init status --wait
+      changed_when: false
+
     - name: Installer nginx
       apt:
         name: nginx
