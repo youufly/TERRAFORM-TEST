@@ -78,7 +78,7 @@ jobs:
           path: envs/dev-aws
 
       - name: Terraform apply (make apply)
-        run: make apply
+        run: make apply CIDR_ADMIN=0.0.0.0/0
 
       - name: Installer Ansible
         run: sudo apt-get update && sudo apt-get install -y ansible
