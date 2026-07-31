@@ -10,9 +10,6 @@ jobs:
   validation:
     name: Validation IaC (fmt, tflint, trivy)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: envs/dev-aws
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,25 +27,25 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
-      - name: Terraform fmt
-        run: terraform fmt -check -recursive
-
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
           tflint_version: v0.64.0
 
-      - name: TFLint
-        run: |
-          tflint --init
-          tflint
-
       - name: Setup Trivy
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
-      - name: Trivy scan
-        run: trivy config --exit-code 1 --severity HIGH,CRITICAL .
+      - name: Validation complete (make check)
+        run: make check CIDR_ADMIN=0.0.0.0/0
+
+      - name: Terraform plan (make plan)
+        run: make plan CIDR_ADMIN=0.0.0.0/0
+
+      - name: Sauvegarder le plan pour le job deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: envs/dev-aws/dev.tfplan
 
   deploy:
     name: Deploiement AWS + provisioning Ansible
@@ -71,38 +68,27 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
-      - name: Terraform init
-        working-directory: envs/dev-aws
-        run: terraform init
+      - name: Terraform init (make init)
+        run: make init
 
-      - name: Terraform apply
-        working-directory: envs/dev-aws
-        env:
-          TF_VAR_cidr_admin: "0.0.0.0/0"
-        run: terraform apply -auto-approve
+      - name: Recuperer le plan valide par le job validation
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: envs/dev-aws
 
-      - name: Recuperer l'IP publique et generer l'inventaire
-        working-directory: envs/dev-aws
-        run: |
-          IP=$(terraform output -raw url_publique | sed -e 's|http://||')
-          echo "IP_INSTANCE=$IP" >> "$GITHUB_ENV"
-          cat > ../../ansible/inventory.ini << INV
-          [web]
-          $IP ansible_user=ubuntu ansible_ssh_private_key_file=tpiac-dev-key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-          INV
-
-      - name: Copier la cle privee generee pour Ansible
-        run: cp envs/dev-aws/tpiac-dev-key.pem ansible/tpiac-dev-key.pem
+      - name: Terraform apply (make apply)
+        run: make apply
 
       - name: Installer Ansible
         run: sudo apt-get update && sudo apt-get install -y ansible
 
-      - name: Attendre que SSH soit disponible
-        run: sleep 30
+      - name: Generer l'inventaire (make inventory)
+        run: make inventory
 
-      - name: Lancer le playbook Ansible
-        working-directory: ansible
-        run: ansible-playbook -i inventory.ini playbook.yml
+      - name: Lancer le playbook Ansible (make configure)
+        run: make configure
 
       - name: Afficher l'URL du site deploye
-        run: echo "Site accessible sur http://${{ env.IP_INSTANCE }}"
+        working-directory: envs/dev-aws
+        run: terraform output url_publique

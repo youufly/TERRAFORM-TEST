@@ -3,13 +3,23 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 MAKEFLAGS += --warn-undefined-variables --no-print-directory
 
+# ---- Parametres (surchargeables : make plan CIDR_ADMIN=1.2.3.4/32) ----------
 TF_DIR := envs/dev-aws
 ANSIBLE_DIR := ansible
+TF_PLAN := dev.tfplan
+INV_FILE := $(ANSIBLE_DIR)/inventory.ini
+SSH_KEY := tpiac-dev-key.pem
+
+# CIDR_ADMIN : si defini, surcharge l'IP autorisee en SSH (utilise par la CI)
+CIDR_ADMIN ?=
+TF_VARS := $(if $(CIDR_ADMIN),-var=cidr_admin=$(CIDR_ADMIN),)
 
 .PHONY: help hello build clean \
-        tf-init tf-fmt tf-tflint tf-trivy tf-validate tf-plan tf-apply \
-        provision deploy destroy test
+        fmt tflint trivy check \
+        init plan apply destroy \
+        inventory configure deploy test
 
+# ---- Aide --------------------------------------------------------------------
 help: ## Affiche cette aide
 	@echo ""
 	@echo " Cibles disponibles :"
@@ -27,39 +37,49 @@ build: ## Cree un dossier out/ avec un fichier version.txt date
 	date > out/version.txt
 	@echo "✓ out/version.txt cree"
 
-clean: ## Supprime le dossier out/ sans erreur s'il n'existe pas
-	rm -rf out
+clean: ## Nettoie les fichiers temporaires
+	rm -rf out $(TF_DIR)/.terraform $(TF_DIR)/*.tfplan $(INV_FILE)
 	@echo "✓ nettoye"
 
-tf-init: ## Initialise Terraform
-	cd $(TF_DIR) && terraform init
+# ---- Qualite et securite (etape 1 du pipeline) --------------------------------
+fmt: ## Verifie le formatage du code Terraform
+	cd $(TF_DIR) && terraform fmt -check -recursive
 
-tf-fmt: ## Formate le code Terraform
-	cd $(TF_DIR) && terraform fmt -recursive
-
-tf-tflint: ## Analyse la qualite du code Terraform avec tflint
+tflint: ## Analyse la qualite du code Terraform
 	cd $(TF_DIR) && tflint --init && tflint
 
-tf-trivy: ## Scan de securite du code Terraform avec trivy
+trivy: ## Recherche les mauvaises configurations de securite
 	cd $(TF_DIR) && trivy config --exit-code 1 --severity HIGH,CRITICAL .
 
-tf-validate: tf-init ## Valide la syntaxe Terraform
-	cd $(TF_DIR) && terraform validate
+check: fmt tflint trivy ## Chaine complete de validation (etape 1)
+	@echo "✓ Toutes les validations sont passees."
 
-tf-plan: tf-validate ## Calcule le plan Terraform
-	cd $(TF_DIR) && terraform plan -out=dev.tfplan
+# ---- Cycle Terraform (etape 2) -------------------------------------------------
+init: ## Initialise Terraform
+	cd $(TF_DIR) && terraform init
 
-tf-apply: ## Applique le plan Terraform precedemment calcule
-	cd $(TF_DIR) && terraform apply "dev.tfplan"
+plan: init ## Calcule le plan Terraform
+	cd $(TF_DIR) && terraform plan $(TF_VARS) -out=$(TF_PLAN)
 
-provision: ## Provisionne l'instance avec Ansible (nginx)
-	cd $(ANSIBLE_DIR) && ./inventory.sh > inventory.ini
-	cd $(ANSIBLE_DIR) && ansible-playbook -i inventory.ini playbook.yml
-
-deploy: tf-init tf-plan tf-apply provision ## Deploie l'infra AWS puis la configure avec Ansible
-
-test: tf-fmt tf-tflint tf-trivy tf-validate ## Chaine de verification complete (fmt + validate)
-	@echo "✓ Verifications Terraform passees."
+apply: plan ## Applique le plan Terraform
+	cd $(TF_DIR) && terraform apply "$(TF_PLAN)"
 
 destroy: ## Detruit l'infrastructure AWS
-	cd $(TF_DIR) && terraform destroy
+	cd $(TF_DIR) && terraform destroy $(TF_VARS) -auto-approve
+
+# ---- Pont Terraform -> Ansible (etape 3) ---------------------------------------
+inventory: ## Genere l'inventaire Ansible depuis terraform output
+	@IP=$$(cd $(TF_DIR) && terraform output -raw url_publique | sed -e 's|http://||'); \
+	printf '[web]\n%s ansible_user=ubuntu ansible_ssh_private_key_file=%s/$(SSH_KEY) ansible_ssh_common_args=%s\n' \
+		"$$IP" "$(TF_DIR)" "'-o StrictHostKeyChecking=no'" > $(INV_FILE); \
+	echo "✓ Inventaire genere : $(INV_FILE) -> $$IP"
+
+# ---- Configuration Ansible (etape 4) -------------------------------------------
+configure: inventory ## Applique le playbook Ansible sur la machine
+	cd $(ANSIBLE_DIR) && ansible-playbook -i inventory.ini playbook.yml
+
+# ---- Enchainement complet -------------------------------------------------------
+deploy: check apply configure ## Pipeline complet : validations -> EC2 -> Ansible
+	@echo "✓ Deploiement termine."
+
+test: check ## Alias de check (compatibilite)
