@@ -43,40 +43,41 @@ clean: ## Nettoie les fichiers temporaires
 
 # ---- Qualite et securite (etape 1 du pipeline) --------------------------------
 fmt: ## Verifie le formatage du code Terraform
-	cd $(TF_DIR) && terraform fmt -check -recursive
+	terraform -chdir=$(TF_DIR) fmt -check -recursive
 
 tflint: ## Analyse la qualite du code Terraform
-	cd $(TF_DIR) && tflint --init && tflint
+	tflint --chdir=$(TF_DIR) --init
+	tflint --chdir=$(TF_DIR)
 
 trivy: ## Recherche les mauvaises configurations de securite
-	cd $(TF_DIR) && trivy config --exit-code 1 --severity HIGH,CRITICAL .
+	trivy config --exit-code 1 --severity HIGH,CRITICAL --ignorefile $(TF_DIR)/.trivyignore $(TF_DIR)
 
 check: fmt tflint trivy ## Chaine complete de validation (etape 1)
 	@echo "✓ Toutes les validations sont passees."
 
 # ---- Cycle Terraform (etape 2) -------------------------------------------------
 init: ## Initialise Terraform
-	cd $(TF_DIR) && terraform init
+	terraform -chdir=$(TF_DIR) init
 
 plan: init ## Calcule le plan Terraform
-	cd $(TF_DIR) && terraform plan $(TF_VARS) -out=$(TF_PLAN)
+	terraform -chdir=$(TF_DIR) plan $(TF_VARS) -out=$(TF_PLAN)
 
 apply: plan ## Applique le plan Terraform
-	cd $(TF_DIR) && terraform apply "$(TF_PLAN)"
+	terraform -chdir=$(TF_DIR) apply "$(TF_PLAN)"
 
 destroy: ## Detruit l'infrastructure AWS
-	cd $(TF_DIR) && terraform destroy $(TF_VARS) -auto-approve
+	terraform -chdir=$(TF_DIR) destroy $(TF_VARS) -auto-approve
 
 # ---- Pont Terraform -> Ansible (etape 3) ---------------------------------------
 inventory: ## Genere l'inventaire Ansible depuis terraform output
-	@IP=$$(cd $(TF_DIR) && terraform output -raw url_publique | sed -e 's|http://||'); \
+	@IP=$$(terraform -chdir=$(TF_DIR) output -raw url_publique | sed -e 's|http://||'); \
 	printf '[web]\n%s ansible_user=ubuntu ansible_ssh_private_key_file=%s/$(SSH_KEY) ansible_ssh_common_args=%s\n' \
-		"$$IP" "$(CURDIR)/$(TF_DIR)" "'-o StrictHostKeyChecking=no'" > $(INV_FILE); \
+		"$$IP" "$(TF_DIR)" "'-o StrictHostKeyChecking=no'" > $(INV_FILE); \
 	echo "✓ Inventaire genere : $(INV_FILE) -> $$IP"
 
 # ---- Configuration Ansible (etape 4) -------------------------------------------
 configure: inventory ## Applique le playbook Ansible sur la machine
-	cd $(ANSIBLE_DIR) && ansible-playbook -i inventory.ini playbook.yml
+	ansible-playbook -i $(INV_FILE) $(ANSIBLE_DIR)/playbook.yml
 
 # ---- Enchainement complet -------------------------------------------------------
 deploy: check apply configure ## Pipeline complet : validations -> EC2 -> Ansible
